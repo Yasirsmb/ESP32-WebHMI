@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebHMI Settings</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Courier New', Consolas, monospace;
+      background: #0b0f1a;
+      color: #7a94b0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px; height: 42px;
+      background: #0b0f1a; border-bottom: 1px solid #1a2338; flex-shrink: 0;
+    }
+    .brand { font-size: 0.78rem; color: #58a6ff; letter-spacing: 0.14em; font-weight: bold; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .btn-top {
+      background: none; border: 1px solid #1e2d42; border-radius: 3px;
+      color: #7a94b0; padding: 3px 10px; font-family: inherit;
+      font-size: 0.68rem; letter-spacing: 0.1em; cursor: pointer;
+      text-transform: uppercase; text-decoration: none;
+      transition: border-color 0.2s, color 0.2s; display: inline-block;
+    }
+    .btn-top:hover { border-color: #58a6ff; color: #58a6ff; }
+
+    /* ── Content ── */
+    .content { max-width: 640px; margin: 28px auto; padding: 0 16px; width: 100%; flex: 1; }
+
+    /* ── Section cards ── */
+    .section {
+      background: #0f1525; border: 1px solid #1a2338;
+      border-radius: 6px; padding: 22px 24px; margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 0.7rem; color: #58a6ff; letter-spacing: 0.18em;
+      text-transform: uppercase; margin-bottom: 20px;
+      padding-bottom: 10px; border-bottom: 1px solid #1a2338;
+    }
+
+    /* ── Form fields ── */
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+    label {
+      display: block; font-size: 0.63rem; color: #7a94b0;
+      letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%; background: #0b0f1a; border: 1.5px solid #1e2d42;
+      border-radius: 4px; color: #e0eaf5; padding: 10px 12px;
+      font-family: inherit; font-size: 0.88rem; outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus { border-color: #58a6ff; }
+    input::placeholder { color: #2a3a52; }
+    .hint { font-size: 0.62rem; color: #3d5470; margin-top: 5px; letter-spacing: 0.06em; }
+
+    /* ── Mode toggle ── */
+    .mode-row { display: flex; gap: 8px; margin-bottom: 20px; }
+    .mode-btn {
+      flex: 1; padding: 9px; background: #0b0f1a;
+      border: 1.5px solid #1e2d42; border-radius: 4px;
+      color: #3d5470; font-family: inherit; font-size: 0.72rem;
+      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-btn.active { border-color: #58a6ff; color: #58a6ff; background: #0d1e38; }
+
+    /* ── Checkbox ── */
+    .check-row {
+      display: flex; align-items: center; gap: 10px;
+      margin: 16px 0; cursor: pointer;
+    }
+    .check-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #58a6ff; cursor: pointer; }
+    .check-row span { font-size: 0.75rem; color: #7a94b0; letter-spacing: 0.08em; }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-save {
+      flex: 1; background: #142238; border: 1px solid #1e3354;
+      border-radius: 4px; color: #58a6ff; padding: 11px;
+      font-family: inherit; font-size: 0.78rem; font-weight: bold;
+      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-save:hover { background: #1a2e4a; }
+    .btn-restart {
+      flex: 1; background: #1a1a0a; border: 1px solid #4a3a10;
+      border-radius: 4px; color: #f59e0b; padding: 11px;
+      font-family: inherit; font-size: 0.78rem; font-weight: bold;
+      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-restart:hover { background: #2a2810; }
+
+    /* ── Status bar ── */
+    #status-bar {
+      display: none; padding: 11px 16px; border-radius: 4px;
+      font-size: 0.75rem; letter-spacing: 0.07em; margin-top: 14px;
+    }
+    #status-bar.ok  { background: #0a2010; border: 1px solid #22c55e; color: #22c55e; }
+    #status-bar.err { background: #200a0a; border: 1px solid #f85149; color: #f85149; }
+
+    /* ── Sub-section ── */
+    .subsection { display: none; margin-top: 14px; }
+    .subsection.visible { display: block; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center; padding: 10px;
+      font-size: 0.62rem; color: #1e2d42; letter-spacing: 0.08em;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <span class="brand">WebHMI</span>
+    <div class="topbar-right">
+      <a class="btn-top" href="/">&#8592; Dashboard</a>
+      <a class="btn-top" href="/logout">Logout</a>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ── Account ── -->
+    <div class="section">
+      <div class="section-title">&#9632; Account</div>
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="auth-user" placeholder="admin">
+      </div>
+      <div class="field">
+        <label>New Password</label>
+        <input type="password" id="auth-pass" placeholder="Leave blank to keep current">
+        <div class="hint">Min 4 characters</div>
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input type="password" id="auth-pass2" placeholder="Repeat new password">
+      </div>
+    </div>
+
+    <!-- ── WiFi Mode ── -->
+    <div class="section">
+      <div class="section-title">&#9632; WiFi Mode</div>
+      <div class="mode-row">
+        <button class="mode-btn active" id="btn-ap"  onclick="setMode('ap')">
+          &#9679; Access Point
+        </button>
+        <button class="mode-btn"        id="btn-sta" onclick="setMode('sta')">
+          &#9675; Station (connect to router)
+        </button>
+      </div>
+
+      <!-- AP settings -->
+      <div id="ap-settings" class="subsection visible">
+        <div class="field">
+          <label>Hotspot Name (SSID)</label>
+          <input type="text" id="ap-ssid" placeholder="ESP32-WebHMI">
+        </div>
+        <div class="field">
+          <label>Hotspot Password</label>
+          <input type="text" id="ap-pass" placeholder="min 8 characters">
+          <div class="hint">Min 8 characters for WPA2. Leave blank for open network.</div>
+        </div>
+        <div class="hint" style="margin-top:8px">
+          Device IP will always be <strong style="color:#58a6ff">192.168.4.1</strong>
+        </div>
+      </div>
+
+      <!-- STA settings -->
+      <div id="sta-settings" class="subsection">
+        <div class="field">
+          <label>Router SSID</label>
+          <input type="text" id="sta-ssid" placeholder="Your WiFi network name">
+        </div>
+        <div class="field">
+          <label>Router Password</label>
+          <input type="password" id="sta-pass" placeholder="Your WiFi password">
+        </div>
+        <div class="hint">If connection fails, device falls back to Access Point mode automatically.</div>
+      </div>
+    </div>
+
+    <!-- ── Network (STA only) ── -->
+    <div class="section" id="network-section" style="display:none">
+      <div class="section-title">&#9632; Network (Station Mode)</div>
+      <label class="check-row">
+        <input type="checkbox" id="static-ip" onchange="toggleStaticIP(this.checked)">
+        <span>Use Static IP Address</span>
+      </label>
+      <div id="ip-fields" class="subsection">
+        <div class="field">
+          <label>IP Address</label>
+          <input type="text" id="ip-addr" placeholder="192.168.1.100">
+        </div>
+        <div class="field">
+          <label>Gateway</label>
+          <input type="text" id="ip-gw" placeholder="192.168.1.1">
+        </div>
+        <div class="field">
+          <label>Subnet Mask</label>
+          <input type="text" id="ip-nm" placeholder="255.255.255.0">
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Data Logging ── -->
+    <div class="section">
+      <div class="section-title">&#9632; Data Logging</div>
+      <label class="check-row">
+        <input type="checkbox" id="log-enabled">
+        <span>Enable periodic logging to log.csv</span>
+      </label>
+      <div class="field" style="margin-top:14px">
+        <label>Log Interval (seconds)</label>
+        <input type="text" id="log-interval" placeholder="60">
+      </div>
+      <div class="field">
+        <label>Max Entries (then auto-clear)</label>
+        <input type="text" id="log-max" placeholder="1000">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; align-items:center">
+        <a id="log-download" href="/api/log" class="btn-save"
+           style="text-decoration:none; text-align:center; padding:9px 16px">
+          &#11015; Download CSV
+        </a>
+        <button class="btn-restart" style="flex:0" onclick="clearLog()">&#128465; Clear Log</button>
+        <span id="log-info" style="font-size:0.68rem; color:#3d5470; letter-spacing:0.06em"></span>
+      </div>
+    </div>
+
+    <!-- ── OTA Firmware Update ── -->
+    <div class="section">
+      <div class="section-title">&#9632; Firmware Update (OTA)</div>
+      <div class="hint" style="margin-bottom:14px">
+        Select a .bin file built with <strong style="color:#c0d0e0">idf.py build</strong>.
+        The device will restart automatically after flashing.
+      </div>
+      <div class="field">
+        <label>Firmware File (.bin)</label>
+        <input type="file" id="ota-file" accept=".bin"
+               style="color:#c0d0e0; padding:8px 0; border:none; background:none; cursor:pointer">
+      </div>
+      <div style="background:#0b0f1a; border-radius:4px; height:6px; margin:10px 0; overflow:hidden; display:none" id="ota-bar-wrap">
+        <div id="ota-bar" style="height:100%; width:0%; background:#58a6ff; transition:width 0.2s"></div>
+      </div>
+      <button class="btn-save" style="margin-top:4px" onclick="startOta()">&#8593; Upload &amp; Flash</button>
+      <div id="ota-status" style="margin-top:10px; font-size:0.75rem; color:#3d5470; letter-spacing:0.06em"></div>
+    </div>
+
+    <!-- ── Actions ── -->
+    <div class="btn-row">
+      <button class="btn-save"    onclick="saveSettings()">Save Settings</button>
+      <button class="btn-restart" onclick="saveAndRestart()">Save &amp; Restart &#8635;</button>
+    </div>
+    <div id="status-bar"></div>
+
+  </div>
+
+  <footer>WebHMI Settings &mdash; Changes marked with &#8635; require restart</footer>
+
+  <script>
+    let cfg = {};
+    let currentMode = 'ap';
+
+    // ── Load config on page load ──
+    fetch('/api/config')
+      .then(r => r.json())
+      .then(data => {
+        cfg = data;
+        const w = cfg.wifi  || {};
+        const a = cfg.auth  || {};
+
+        document.getElementById('auth-user').value = a.username || '';
+
+        const mode = w.mode || 'ap';
+        setMode(mode, false);
+
+        document.getElementById('ap-ssid').value  = w.ap_ssid      || w.ssid     || '';
+        document.getElementById('ap-pass').value  = w.ap_password  || w.password || '';
+        document.getElementById('sta-ssid').value = w.sta_ssid     || '';
+        document.getElementById('sta-pass').value = w.sta_password || '';
+
+        const si = !!w.static_ip;
+        document.getElementById('static-ip').checked = si;
+        toggleStaticIP(si);
+
+        document.getElementById('ip-addr').value = w.ip      || '192.168.1.100';
+        document.getElementById('ip-gw').value   = w.gateway || '192.168.1.1';
+        document.getElementById('ip-nm').value   = w.netmask || '255.255.255.0';
+      })
+      .catch(() => showStatus('Could not load config from device', true));
+
+    // ── Mode toggle ──
+    function setMode(mode, userAction = true) {
+      currentMode = mode;
+      document.getElementById('btn-ap').classList.toggle('active',  mode === 'ap');
+      document.getElementById('btn-sta').classList.toggle('active', mode === 'sta');
+      document.getElementById('ap-settings').classList.toggle('visible', mode === 'ap');
+      document.getElementById('sta-settings').classList.toggle('visible', mode === 'sta');
+      document.getElementById('network-section').style.display = mode === 'sta' ? 'block' : 'none';
+      if (userAction) hideStatus();
+    }
+
+    function toggleStaticIP(checked) {
+      document.getElementById('ip-fields').classList.toggle('visible', checked);
+    }
+
+    // ── Save ──
+    async function saveSettings() {
+      const newPass  = document.getElementById('auth-pass').value;
+      const newPass2 = document.getElementById('auth-pass2').value;
+
+      if (newPass && newPass !== newPass2) {
+        showStatus('Passwords do not match', true); return;
+      }
+      if (newPass && newPass.length < 4) {
+        showStatus('Password must be at least 4 characters', true); return;
+      }
+      const apPass = document.getElementById('ap-pass').value;
+      if (apPass && apPass.length > 0 && apPass.length < 8) {
+        showStatus('Hotspot password must be at least 8 characters', true); return;
+      }
+
+      if (!cfg.wifi)  cfg.wifi  = {};
+      if (!cfg.auth)  cfg.auth  = {};
+
+      cfg.wifi.mode         = currentMode;
+      cfg.wifi.ap_ssid      = document.getElementById('ap-ssid').value  || 'ESP32-WebHMI';
+      cfg.wifi.ap_password  = document.getElementById('ap-pass').value;
+      cfg.wifi.sta_ssid     = document.getElementById('sta-ssid').value;
+      cfg.wifi.sta_password = document.getElementById('sta-pass').value;
+      cfg.wifi.static_ip    = document.getElementById('static-ip').checked;
+      cfg.wifi.ip           = document.getElementById('ip-addr').value;
+      cfg.wifi.gateway      = document.getElementById('ip-gw').value;
+      cfg.wifi.netmask      = document.getElementById('ip-nm').value;
+
+      const newUser = document.getElementById('auth-user').value.trim();
+      if (newUser) cfg.auth.username = newUser;
+      if (newPass) cfg.auth.password = newPass;
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cfg, null, 2)
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        showStatus('Saved. WiFi/network changes need a restart to apply.', false);
+        document.getElementById('auth-pass').value  = '';
+        document.getElementById('auth-pass2').value = '';
+      } catch(e) {
+        showStatus('Save failed: ' + e.message, true);
+      }
+    }
+
+    async function saveAndRestart() {
+      await saveSettings();
+      const bar = document.getElementById('status-bar');
+      if (bar.classList.contains('err')) return;
+      showStatus('Restarting device... reconnect and refresh in a few seconds.', false);
+      try { await fetch('/api/restart', { method: 'POST' }); } catch(_) {}
+    }
+
+    // ── Logging form populate ──
+    function populateLogging(cfg) {
+      const lg = cfg.logging || {};
+      document.getElementById('log-enabled').checked  = lg.enabled !== false;
+      document.getElementById('log-interval').value   = lg.interval_s  || 60;
+      document.getElementById('log-max').value        = lg.max_entries || 1000;
+    }
+    // Hook into existing loadConfig
+    const _origFetch = fetch;
+    fetch('/api/config').then(r => r.json()).then(data => {
+      populateLogging(data);
+    }).catch(() => {});
+
+    // Extend saveSettings to include logging
+    const _origSave = saveSettings;
+    saveSettings = async function() {
+      if (!cfg.logging) cfg.logging = {};
+      cfg.logging.enabled     = document.getElementById('log-enabled').checked;
+      cfg.logging.interval_s  = parseInt(document.getElementById('log-interval').value) || 60;
+      cfg.logging.max_entries = parseInt(document.getElementById('log-max').value) || 1000;
+      await _origSave();
+    };
+
+    // Load log stats
+    fetch('/api/log/info').then(r => r.json()).then(info => {
+      document.getElementById('log-info').textContent =
+        info.entries + ' entries · ' + (info.size_bytes / 1024).toFixed(1) + ' KB';
+    }).catch(() => {});
+
+    async function clearLog() {
+      if (!confirm('Clear all log data?')) return;
+      await fetch('/api/log/clear', { method: 'POST' });
+      document.getElementById('log-info').textContent = '0 entries · 0 KB';
+      showStatus('Log cleared', false);
+    }
+
+    // ── OTA upload ──
+    function startOta() {
+      const file = document.getElementById('ota-file').files[0];
+      if (!file) { showStatus('Select a .bin file first', true); return; }
+      if (!file.name.endsWith('.bin')) { showStatus('File must be a .bin', true); return; }
+
+      const statusEl  = document.getElementById('ota-status');
+      const barWrap   = document.getElementById('ota-bar-wrap');
+      const bar       = document.getElementById('ota-bar');
+      barWrap.style.display = 'block';
+      statusEl.style.color  = '#c0d0e0';
+      statusEl.textContent  = 'Uploading ' + (file.size / 1024).toFixed(0) + ' KB...';
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/ota');
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+          const pct = Math.round(e.loaded / e.total * 100);
+          bar.style.width = pct + '%';
+          statusEl.textContent = 'Uploading... ' + pct + '%';
+        }
+      };
+      xhr.onload = () => {
+        bar.style.width = '100%';
+        bar.style.background = '#22c55e';
+        statusEl.style.color = '#22c55e';
+        statusEl.textContent = 'Done! Device is restarting. Reconnect in a few seconds.';
+      };
+      xhr.onerror = () => {
+        bar.style.background = '#f85149';
+        statusEl.style.color = '#f85149';
+        statusEl.textContent = 'Upload failed. Check connection.';
+      };
+      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+      xhr.send(file);
+    }
+
+    function showStatus(msg, isErr) {
+      const bar = document.getElementById('status-bar');
+      bar.textContent = msg;
+      bar.className = isErr ? 'err' : 'ok';
+      bar.style.display = 'block';
+    }
+    function hideStatus() {
+      document.getElementById('status-bar').style.display = 'none';
+    }
+  </script>
+</body>
+</html>

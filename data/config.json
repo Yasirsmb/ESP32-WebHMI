@@ -1,0 +1,183 @@
+{
+  "title": "Machine Control Panel",
+  "refresh_ms": 2000,
+
+  "wifi": {
+    "mode":         "ap",
+    "ap_ssid":      "ESP32-WebHMI",
+    "ap_password":  "12345678",
+    "sta_ssid":     "",
+    "sta_password": "",
+    "static_ip":    false,
+    "ip":           "192.168.1.100",
+    "gateway":      "192.168.1.1",
+    "netmask":      "255.255.255.0"
+  },
+
+  "logging": {
+    "enabled":     true,
+    "interval_s":  60,
+    "max_entries": 1000
+  },
+
+  "auth": {
+    "username": "admin",
+    "password": "admin123"
+  },
+
+  "theme": {
+    "bg":       "#0b0f1a",
+    "card_bg":  "#0f1525",
+    "border":   "#1a2338",
+    "accent":   "#58a6ff",
+    "label":    "#3d5470",
+    "text":     "#c0d0e0",
+    "unit":     "#f59e0b",
+    "ok":       "#22c55e",
+    "warn":     "#f59e0b",
+    "crit":     "#f85149"
+  },
+
+  "widgets": [
+
+    {
+      "id":          "temperature",
+      "type":        "gauge",
+      "label":       "Temperature",
+      "unit":        "°C",
+      "min":         0,
+      "max":         150,
+      "warn":        80,
+      "crit":        120,
+      "color":       "#f97316",
+      "label_color": "#f97316",
+      "pin":         34,
+      "pin_mode":    "adc",
+      "adc_scale":   150.0
+    },
+
+    {
+      "id":       "pressure",
+      "type":     "gauge",
+      "label":    "Pressure",
+      "unit":     "BAR",
+      "min":      0,
+      "max":      10,
+      "warn":     7,
+      "crit":     9,
+      "pin":      35,
+      "pin_mode": "adc",
+      "adc_scale": 10.0
+    },
+
+    {
+      "id":          "rpm",
+      "type":        "gauge",
+      "label":       "Motor Speed",
+      "unit":        "RPM",
+      "min":         0,
+      "max":         3000,
+      "warn":        2500,
+      "crit":        2800,
+      "label_color": "#38bdf8",
+      "pin":         32,
+      "pin_mode":    "adc",
+      "adc_scale":   3000.0
+    },
+
+    {
+      "id":          "pump1",
+      "type":        "toggle",
+      "label":       "Pump 1",
+      "label_color": "#E63310",
+      "pin":         2,
+      "pin_mode":    "output",
+      "active_high": true
+    },
+
+    {
+      "id":          "heater",
+      "type":        "toggle",
+      "label":       "Heater",
+      "pin":         4,
+      "pin_mode":    "output",
+      "active_high": true
+    },
+
+    {
+      "id":          "fan",
+      "type":        "toggle",
+      "label":       "Fan",
+      "pin":         5,
+      "pin_mode":    "output",
+      "active_high": true
+    },
+
+    {
+      "id":       "voltage",
+      "type":     "display",
+      "label":    "Supply Voltage",
+      "unit":     "V",
+      "min":      0,
+      "max":      30,
+      "pin":      33,
+      "pin_mode": "adc",
+      "adc_scale": 30.0
+    },
+
+    {
+      "id":       "current",
+      "type":     "display",
+      "label":    "Current Draw",
+      "unit":     "A",
+      "min":      0,
+      "max":      10,
+      "pin":      36,
+      "pin_mode": "adc",
+      "adc_scale": 10.0
+    },
+
+    {
+      "id":       "humidity",
+      "type":     "display",
+      "label":    "Humidity",
+      "unit":     "%RH",
+      "min":      0,
+      "max":      100,
+      "pin":      39,
+      "pin_mode": "adc",
+      "adc_scale": 100.0
+    },
+
+    {
+      "id":        "pump_status",
+      "type":      "led",
+      "label":     "Pump Running",
+      "pin":       15,
+      "pin_mode":  "digital_in",
+      "color_on":  "#22c55e",
+      "color_off": "#3d5470"
+    },
+
+    {
+      "id":      "temp_chart",
+      "type":    "chart",
+      "label":   "Temperature History",
+      "source":  "temperature",
+      "color":   "#f97316",
+      "points":  60,
+      "span":    4
+    },
+
+    {
+      "id":     "rpm_chart",
+      "type":   "chart",
+      "label":  "RPM History",
+      "source": "rpm",
+      "color":  "#58a6ff",
+      "points": 60,
+      "span":   4
+    }
+
+  ]
+}

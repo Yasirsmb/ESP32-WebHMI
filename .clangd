@@ -1,0 +1,11 @@
+CompileFlags:
+  Remove:
+    - -mlongcalls
+    - -fno-tree-switch-conversion
+    - -fno-shrink-wrap
+    - -fstrict-volatile-bitfields
+    - -fno-jump-tables
+    - -fmacro-prefix-map=*
+    - -Wno-frame-address
+Diagnostics:
+  UnusedIncludes: None

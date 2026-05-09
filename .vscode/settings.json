@@ -1,0 +1,23 @@
+{
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "idf.openOcdConfigs": [
+    "board/esp32s3-builtin.cfg"
+  ],
+  "idf.currentSetup": "C:/Espressif/frameworks/esp-idf-v5.5.2/",
+  "idf.customExtraVars": {
+    "OPENOCD_SCRIPTS": "C:\\Users\\hp\\.espressif\\tools\\openocd-esp32\\v0.11.0-esp32-20221026/openocd-esp32/share/openocd/scripts",
+    "IDF_CCACHE_ENABLE": "1",
+    "IDF_TARGET": "esp32s3"
+  },
+  "clangd.path": "D:\\Espressif\\tools\\esp-clang\\esp-19.1.2_20250312\\esp-clang\\bin\\clangd.exe",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=D:\\Documents\\ESP32_IDF\\webhmi\\build"
+  ],
+  "python.languageServer": "Pylance",
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingModuleSource": "none",
+    "reportShadowedImports": "none"
+  }
+}

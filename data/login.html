@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebHMI Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Courier New', Consolas, monospace;
+      background: #0b0f1a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: #1a2338;
+      border: 1px solid #2a3a55;
+      border-radius: 10px;
+      padding: 44px 40px 36px;
+      width: min(380px, 94vw);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+
+    .brand {
+      font-size: 0.72rem;
+      color: #58a6ff;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 1rem;
+      color: #e0eaf5;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 36px;
+      font-weight: normal;
+    }
+
+    label {
+      display: block;
+      font-size: 0.65rem;
+      color: #7a94b0;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    input {
+      display: block;
+      width: 100%;
+      background: #0f1a2e;
+      border: 1.5px solid #3a5070;
+      border-radius: 5px;
+      color: #e0eaf5;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      margin-bottom: 22px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: #58a6ff;
+      box-shadow: 0 0 0 3px rgba(88,166,255,0.15);
+    }
+
+    input::placeholder { color: #3a5070; }
+
+    .err {
+      display: none;
+      background: #2a0808;
+      border: 1px solid #f85149;
+      border-radius: 5px;
+      color: #f85149;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      padding: 10px 14px;
+      margin-bottom: 22px;
+      text-align: center;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      background: #1f6feb;
+      border: none;
+      border-radius: 5px;
+      color: #ffffff;
+      padding: 13px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: bold;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-top: 4px;
+    }
+
+    button:hover  { background: #388bfd; }
+    button:active { background: #1158c7; }
+
+    footer {
+      text-align: center;
+      font-size: 0.62rem;
+      color: #3a5070;
+      letter-spacing: 0.1em;
+      margin-top: 28px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">WebHMI</div>
+    <h1>Sign In</h1>
+
+    <div class="err" id="err">Invalid username or password</div>
+
+    <form method="POST" action="/login">
+      <label for="u">Username</label>
+      <input type="text"     id="u" name="username"
+             placeholder="Enter username" autocomplete="username" autofocus>
+
+      <label for="p">Password</label>
+      <input type="password" id="p" name="password"
+             placeholder="Enter password" autocomplete="current-password">
+
+      <button type="submit">Login &rarr;</button>
+    </form>
+
+    <footer>ESP32 WebHMI &mdash; Access Point 192.168.4.1</footer>
+  </div>
+
+  <script>
+    if (location.search.includes('err=1'))
+      document.getElementById('err').style.display = 'block';
+  </script>
+</body>
+</html>
