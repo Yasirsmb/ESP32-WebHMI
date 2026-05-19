@@ -9,8 +9,8 @@
     "sta_ssid":     "",
     "sta_password": "",
     "static_ip":    false,
-    "ip":           "192.168.1.100",
-    "gateway":      "192.168.1.1",
+    "ip":           "192.168.0.100",
+    "gateway":      "192.168.0.1",
     "netmask":      "255.255.255.0"
   },
 

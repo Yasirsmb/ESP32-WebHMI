@@ -178,6 +178,95 @@ function markStale(id, stale) {
 // ──────────────────────────────────────────────
 //  Widget renderers
 // ──────────────────────────────────────────────
+// ──────────────────────────────────────────────
+//  Resize handle  (width snaps to grid columns,
+//                  height is free per-card — no row coupling)
+// ──────────────────────────────────────────────
+let _rsz = null;
+
+// Floating tooltip shown while dragging
+const _rszTip = (() => {
+  const d = document.createElement('div');
+  d.style.cssText = 'display:none;position:fixed;background:#1a2338;color:#c0d0e0;' +
+    'padding:4px 10px;border-radius:4px;font-size:0.68rem;font-family:monospace;' +
+    'pointer-events:none;z-index:300;border:1px solid #3a5470;letter-spacing:0.08em;' +
+    'white-space:nowrap;';
+  document.body.appendChild(d);
+  return d;
+})();
+
+function initResize(card, w) {
+  const handle = document.createElement('div');
+  handle.className = 'resize-handle';
+  handle.setAttribute('draggable', 'false');
+  card.appendChild(handle);
+
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const grid  = document.getElementById('grid');
+    const cols  = getComputedStyle(grid).gridTemplateColumns.split(' ');
+    const gap   = parseFloat(getComputedStyle(grid).gap) || 10;
+
+    _rsz = {
+      card, w,
+      startX:    e.clientX,
+      startY:    e.clientY,
+      startSpan: w.span || 1,
+      startH:    card.offsetHeight,
+      cellW:     parseFloat(cols[0]) + gap,
+    };
+    document.body.style.cursor     = 'se-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', _rszMove);
+    document.addEventListener('mouseup',   _rszEnd);
+  });
+}
+
+function _rszMove(e) {
+  if (!_rsz) return;
+  const { card, startX, startY, startSpan, startH, cellW } = _rsz;
+
+  // Width: snap to column grid
+  const newSpan = Math.max(1, Math.round(startSpan + (e.clientX - startX) / cellW));
+  // Height: free pixel sizing — does NOT affect any other card
+  const newH    = Math.max(80, startH + (e.clientY - startY));
+
+  card.style.gridColumn = newSpan > 1 ? 'span ' + newSpan : '';
+  card.style.minHeight  = newH + 'px';
+
+  // Show live tooltip next to cursor
+  _rszTip.style.display = 'block';
+  _rszTip.style.left    = (e.clientX + 14) + 'px';
+  _rszTip.style.top     = (e.clientY - 10) + 'px';
+  _rszTip.textContent   = newSpan + ' col · ' + newH + ' px';
+}
+
+function _rszEnd() {
+  if (!_rsz) return;
+  const { card, w } = _rsz;
+
+  const cm  = card.style.gridColumn.match(/span\s+(\d+)/);
+  w.span    = cm ? parseInt(cm[1]) : 1;
+  w.height  = Math.round(parseFloat(card.style.minHeight) || 0);
+  delete w.rows;   // rows was the old approach — height replaces it
+
+  _rszTip.style.display      = 'none';
+  document.body.style.cursor     = '';
+  document.body.style.userSelect = '';
+  document.removeEventListener('mousemove', _rszMove);
+  document.removeEventListener('mouseup',   _rszEnd);
+  _rsz = null;
+  saveOrder();   // saves span + height to config.json on device
+}
+
+function setupCard(card, w) {
+  applySize(card, w);
+  initDrag(card, w);
+  initResize(card, w);
+}
+
 function makeLabel(w) {
   const label = el('span', 'wcard-label');
   label.textContent = w.label || w.id;
@@ -187,8 +276,9 @@ function makeLabel(w) {
 
 function applySize(card, w) {
   if (w.span && w.span > 1) card.style.gridColumn = 'span ' + w.span;
-  if (w.rows && w.rows > 1) card.style.gridRow    = 'span ' + w.rows;
-  if (w.height)             card.style.minHeight  = w.height + 'px';
+  // height is always min-height so cards never stretch their row to affect neighbours
+  const h = w.height || (w.rows && w.rows > 1 ? w.rows * 155 : 0);
+  if (h > 0) card.style.minHeight = h + 'px';
 }
 
 // ──────────────────────────────────────────────
@@ -254,7 +344,7 @@ function saveOrder() {
 
 function renderInput(w) {
   const card = el('div', 'wcard');
-  applySize(card, w); initDrag(card, w);
+  setupCard(card, w);
   const header = el('div', 'wcard-header');
   const label = makeLabel(w);
   header.append(label);
@@ -269,7 +359,7 @@ function renderInput(w) {
 
 function renderButton(w) {
   const card = el('div', 'wcard');
-  applySize(card, w); initDrag(card, w);
+  setupCard(card, w);
   const btn = el('button', 'btn-primary btn-block'); btn.textContent = w.label || w.id;
   btn.onclick = () => sendControl(w.id, '1', btn);
   card.append(btn);
@@ -278,7 +368,7 @@ function renderButton(w) {
 
 function renderToggle(w) {
   const card = el('div', 'wcard');
-  applySize(card, w); initDrag(card, w);
+  setupCard(card, w);
   const header = el('div', 'wcard-header');
   const label = makeLabel(w);
   header.append(label);
@@ -298,7 +388,7 @@ function renderToggle(w) {
 
 function renderSlider(w) {
   const card = el('div', 'wcard');
-  applySize(card, w); initDrag(card, w);
+  setupCard(card, w);
   const header = el('div', 'wcard-header');
   const label = makeLabel(w);
   const valDisplay = el('span', 'slider-val'); valDisplay.textContent = (w.min ?? 0) + (w.unit || '');
@@ -317,7 +407,7 @@ function renderSlider(w) {
 
 function renderDisplay(w) {
   const card = el('div', 'wcard');
-  applySize(card, w); initDrag(card, w);
+  setupCard(card, w);
   card.id = 'w_' + w.id;
   const header = el('div', 'wcard-header');
   const label = makeLabel(w);
@@ -334,7 +424,7 @@ function renderDisplay(w) {
 
 function renderGauge(w) {
   const card = el('div', 'wcard');
-  applySize(card, w); initDrag(card, w);
+  setupCard(card, w);
   card.id = 'w_' + w.id;
   card.style.display       = 'flex';
   card.style.flexDirection = 'column';
@@ -380,7 +470,7 @@ function renderGauge(w) {
 function renderChart(w) {
   const card = el('div', 'wcard');
   if (!w.span) w.span = 3;
-  applySize(card, w); initDrag(card, w);
+  setupCard(card, w);
   card.id = 'w_' + w.id;
   card.style.display = 'flex';
   card.style.flexDirection = 'column';
@@ -402,7 +492,7 @@ function renderChart(w) {
 
 function renderLed(w) {
   const card = el('div', 'wcard');
-  applySize(card, w); initDrag(card, w);
+  setupCard(card, w);
   card.id = 'w_' + w.id;
   const header = el('div', 'wcard-header');
   const label  = makeLabel(w);
@@ -558,7 +648,6 @@ fetch('/api/config')
     refreshMs = cfg.refresh_ms ?? 2000;
 
     const grid = document.getElementById('grid');
-    grid.style.gridAutoRows = 'minmax(150px, auto)';
     grid.innerHTML = '';
 
     (cfg.widgets || []).forEach(w => {

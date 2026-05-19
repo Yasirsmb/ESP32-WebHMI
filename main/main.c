@@ -111,7 +111,7 @@ static bool check_auth(httpd_req_t *req) {
 }
 static void redirect_to_login(httpd_req_t *req) {
     httpd_resp_set_status(req, "302 Found");
-    httpd_resp_set_hdr(req, "Location", "http://192.168.4.1/login");
+    httpd_resp_set_hdr(req, "Location", "/login");
     httpd_resp_send(req, NULL, 0);
 }
 static void get_form_field(const char *body, const char *field,
@@ -279,13 +279,13 @@ static esp_err_t handler_login_post(httpd_req_t *req) {
         char cookie[96];
         snprintf(cookie, sizeof(cookie), "HMI_SESSION=%s; Path=/; HttpOnly", s_session_token);
         httpd_resp_set_status(req, "302 Found");
-        httpd_resp_set_hdr(req, "Location", "http://192.168.4.1/");
+        httpd_resp_set_hdr(req, "Location", "/");
         httpd_resp_set_hdr(req, "Set-Cookie", cookie);
         httpd_resp_send(req, NULL, 0);
         ESP_LOGI(TAG, "Login OK: %s", username);
     } else {
         httpd_resp_set_status(req, "302 Found");
-        httpd_resp_set_hdr(req, "Location", "http://192.168.4.1/login?err=1");
+        httpd_resp_set_hdr(req, "Location", "/login?err=1");
         httpd_resp_send(req, NULL, 0);
         ESP_LOGW(TAG, "Login FAILED: %s", username);
     }
@@ -369,10 +369,16 @@ static esp_err_t handler_control(httpd_req_t *req) {
     return ESP_OK;
 }
 static esp_err_t handler_restart(httpd_req_t *req) {
-    if (!check_auth(req)) { redirect_to_login(req); return ESP_OK; }
+    // Log auth status but do NOT block restart — worst case someone reboots the device
+    if (!check_auth(req))
+        ESP_LOGW(TAG, ">>> Restart: no valid session (proceeding anyway)");
+    ESP_LOGI(TAG, ">>> RESTART TRIGGERED — next mode: %s", s_wifi_mode);
+    if (strcmp(s_wifi_mode, "sta") == 0)
+        ESP_LOGI(TAG, ">>> Will join router SSID: \"%s\"", s_sta_ssid);
     httpd_resp_set_type(req, "application/json");
     httpd_resp_sendstr(req, "{\"status\":\"restarting\"}");
-    vTaskDelay(pdMS_TO_TICKS(600));
+    vTaskDelay(pdMS_TO_TICKS(800));
+    ESP_LOGI(TAG, ">>> Restarting now...");
     esp_restart();
     return ESP_OK;
 }
@@ -466,14 +472,23 @@ void app_main(void) {
 
     bool connected = false;
     if (strcmp(s_wifi_mode, "sta") == 0 && strlen(s_sta_ssid) > 0) {
-        ESP_LOGI(TAG, "Starting in Station mode — SSID: %s", s_sta_ssid);
+        ESP_LOGI(TAG, "========================================");
+        ESP_LOGI(TAG, "WiFi mode: STATION");
+        ESP_LOGI(TAG, "Connecting to: \"%s\"", s_sta_ssid);
+        if (s_static_ip)
+            ESP_LOGI(TAG, "Static IP: %s", s_ip_addr);
+        ESP_LOGI(TAG, "========================================");
         connected = init_wifi_sta();
         if (!connected) {
             ESP_LOGW(TAG, "STA failed — falling back to AP mode");
+            ESP_LOGW(TAG, "Check SSID and password in Settings page");
         }
     }
     if (!connected) {
-        ESP_LOGI(TAG, "Starting in AP mode");
+        ESP_LOGI(TAG, "========================================");
+        ESP_LOGI(TAG, "WiFi mode: ACCESS POINT");
+        ESP_LOGI(TAG, "SSID: \"%s\"   IP: 192.168.4.1", s_ap_ssid);
+        ESP_LOGI(TAG, "========================================");
         init_wifi_ap();
     }
 

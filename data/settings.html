@@ -324,18 +324,19 @@
       const newPass2 = document.getElementById('auth-pass2').value;
 
       if (newPass && newPass !== newPass2) {
-        showStatus('Passwords do not match', true); return;
+        showStatus('Passwords do not match', true); return false;
       }
       if (newPass && newPass.length < 4) {
-        showStatus('Password must be at least 4 characters', true); return;
+        showStatus('Password must be at least 4 characters', true); return false;
       }
       const apPass = document.getElementById('ap-pass').value;
       if (apPass && apPass.length > 0 && apPass.length < 8) {
-        showStatus('Hotspot password must be at least 8 characters', true); return;
+        showStatus('Hotspot password must be at least 8 characters', true); return false;
       }
 
-      if (!cfg.wifi)  cfg.wifi  = {};
-      if (!cfg.auth)  cfg.auth  = {};
+      if (!cfg.wifi)    cfg.wifi    = {};
+      if (!cfg.auth)    cfg.auth    = {};
+      if (!cfg.logging) cfg.logging = {};
 
       cfg.wifi.mode         = currentMode;
       cfg.wifi.ap_ssid      = document.getElementById('ap-ssid').value  || 'ESP32-WebHMI';
@@ -351,27 +352,50 @@
       if (newUser) cfg.auth.username = newUser;
       if (newPass) cfg.auth.password = newPass;
 
+      // Logging settings (merged here to avoid override chain issues)
+      const logEnabled = document.getElementById('log-enabled');
+      const logInterval = document.getElementById('log-interval');
+      const logMax = document.getElementById('log-max');
+      if (logEnabled)  cfg.logging.enabled     = logEnabled.checked;
+      if (logInterval) cfg.logging.interval_s  = parseInt(logInterval.value) || 60;
+      if (logMax)      cfg.logging.max_entries = parseInt(logMax.value) || 1000;
+
       try {
         const res = await fetch('/api/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
           body: JSON.stringify(cfg, null, 2)
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         showStatus('Saved. WiFi/network changes need a restart to apply.', false);
         document.getElementById('auth-pass').value  = '';
         document.getElementById('auth-pass2').value = '';
+        return true;
       } catch(e) {
         showStatus('Save failed: ' + e.message, true);
+        return false;
       }
     }
 
     async function saveAndRestart() {
-      await saveSettings();
-      const bar = document.getElementById('status-bar');
-      if (bar.classList.contains('err')) return;
-      showStatus('Restarting device... reconnect and refresh in a few seconds.', false);
-      try { await fetch('/api/restart', { method: 'POST' }); } catch(_) {}
+      // Save first, abort if save failed
+      const ok = await saveSettings();
+      if (!ok) return;
+
+      const isSta = currentMode === 'sta';
+      const msg = isSta
+        ? 'Restarting in Station mode. Disconnect from "ESP32-WebHMI", reconnect to your router, then find the device IP in your router\'s client list.'
+        : 'Restarting... reconnect to "' + (document.getElementById('ap-ssid').value || 'ESP32-WebHMI') + '" and open http://192.168.4.1';
+      showStatus(msg, false);
+
+      try {
+        const res  = await fetch('/api/restart', { method: 'POST', credentials: 'same-origin' });
+        const data = await res.json();
+        if (data.status !== 'restarting') throw new Error('unexpected response: ' + JSON.stringify(data));
+      } catch(e) {
+        showStatus('Restart call failed: ' + e.message + ' — try power-cycling the device', true);
+      }
     }
 
     // ── Logging form populate ──
@@ -387,15 +411,6 @@
       populateLogging(data);
     }).catch(() => {});
 
-    // Extend saveSettings to include logging
-    const _origSave = saveSettings;
-    saveSettings = async function() {
-      if (!cfg.logging) cfg.logging = {};
-      cfg.logging.enabled     = document.getElementById('log-enabled').checked;
-      cfg.logging.interval_s  = parseInt(document.getElementById('log-interval').value) || 60;
-      cfg.logging.max_entries = parseInt(document.getElementById('log-max').value) || 1000;
-      await _origSave();
-    };
 
     // Load log stats
     fetch('/api/log/info').then(r => r.json()).then(info => {

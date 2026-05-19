@@ -89,6 +89,7 @@
       padding: 13px 15px;
       position: relative;
       overflow: hidden;
+      align-self: start;        /* each card sizes to its own content, not the row */
     }
     .wcard-header {
       display: flex; justify-content: space-between; align-items: flex-start;
@@ -163,6 +164,20 @@
     /* ── Alarm/warn outlines ── */
     .alarm-active { outline: 1px solid var(--crit); }
     .warn-active  { outline: 1px solid var(--warn); }
+
+    /* ── Resize handle ── */
+    .resize-handle {
+      position: absolute; bottom: 0; right: 0;
+      width: 22px; height: 22px;
+      cursor: se-resize; opacity: 0; transition: opacity 0.2s;
+      display: flex; align-items: flex-end; justify-content: flex-end;
+      padding: 4px;
+    }
+    .wcard:hover .resize-handle { opacity: 1; }
+    .resize-handle::before,
+    .resize-handle::after { content: ''; position: absolute; border-radius: 1px; }
+    .resize-handle::before { right: 4px; bottom: 4px; width: 12px; height: 2px; background: var(--accent); }
+    .resize-handle::after  { right: 4px; bottom: 4px; width: 2px;  height: 12px; background: var(--accent); }
 
     /* ── Drag and drop ── */
     .wcard[draggable="true"] { cursor: grab; }
